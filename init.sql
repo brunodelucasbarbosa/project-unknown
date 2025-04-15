@@ -1,0 +1,40 @@
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+CREATE TABLE IF NOT EXISTS users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(80) NOT NULL,
+    password TEXT NOT NULL,
+    age INTEGER,
+    email VARCHAR(40) UNIQUE NOT NULL,
+    phone VARCHAR(12),
+    address VARCHAR(100),
+    document VARCHAR(14),
+    username VARCHAR(30) UNIQUE NOT NULL,
+    isActive BOOLEAN DEFAULT TRUE,
+    createdAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS posts(
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    title VARCHAR(20) NOT NULL,
+    image TEXT NOT NULL,
+    content TEXT NOT NULL,
+    userId UUID REFERENCES users(id) ON DELETE CASCADE,
+    createdAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    isActive BOOLEAN DEFAULT TRUE
+);
+
+CREATE TABLE IF NOT EXISTS comments(
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    content TEXT NOT NULL,
+    postId UUID REFERENCES posts(id) ON DELETE CASCADE,
+    userId UUID REFERENCES users(id) ON DELETE CASCADE,
+    createdAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    isActive BOOLEAN DEFAULT TRUE
+);
+
+
+-- Crie índices para melhorar performance
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
