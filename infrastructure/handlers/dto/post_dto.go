@@ -2,12 +2,22 @@ package dto
 
 import (
 	"time"
+
+	"github.com/brunodelucasbarbosa/project-unknown/core/domain"
 )
 
 type CreatePostDto struct {
-	ID        *string
-	UserID    *string
-	Content   *CreateContentDto
-	Comments  []*CommentCreatePayload
-	CreatedAt *time.Time
+	UserID  *string
+	Content *CreateContentDto
+}
+
+func (p *CreatePostDto) ToDomain() *domain.Post {
+	n := time.Now()
+	return &domain.Post{
+		ID:        p.UserID,
+		UserID:    p.UserID,
+		Content:   p.Content.ToDomain(),
+		Comments:  nil,
+		CreatedAt: &n,
+	}
 }

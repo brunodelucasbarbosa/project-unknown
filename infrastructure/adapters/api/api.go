@@ -7,9 +7,10 @@ import (
 	"github.com/brunodelucasbarbosa/project-unknown/infrastructure/handlers"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/httprate"
+	"github.com/sirupsen/logrus"
 )
 
-func Router(handlerUser handlers.IHandlerUser) http.Handler {
+func Router(handlerUser handlers.IHandlerUser, handlerPost handlers.HandlerPost) http.Handler {
 	r := chi.NewRouter()
 	r.Use(httprate.Limit(
 		10,
@@ -19,20 +20,25 @@ func Router(handlerUser handlers.IHandlerUser) http.Handler {
 		}),
 	))
 
-	r.Mount("/api/v1", v1RouterUsers(r, handlerUser))
+	logger := logrus.New()
+	logger.SetFormatter(&logrus.JSONFormatter{})
+	logger.SetOutput(logrus.StandardLogger().Writer())
+	logger.SetLevel(logrus.DebugLevel)
+
+	r.Mount("/api/v1", v1Router(r, handlerUser, handlerPost))
 
 	return r
 }
 
-func v1RouterUsers(r *chi.Mux, handlerUser handlers.IHandlerUser) http.Handler {
+func v1Router(r *chi.Mux, handlerUser handlers.IHandlerUser, handlerPost handlers.HandlerPost) http.Handler {
 	r.Route("/api/v1/users", func(r chi.Router) {
 		r.Post("/login", handlerUser.HandleLogin)
 		r.Post("/create", handlerUser.HandleCreateUser)
 	})
 
 	r.Route("/api/v1/users/{id}/post", func(r chi.Router) {
-		//r.Post("/create", handlerUser.HandleCreatePost)
-		//r.Get("/get", handlerUser.HandleGetPost)
+		r.Post("/create", handlerPost.HandleCreatePost)
+		r.Get("/get", handlerPost.HandleGetPost)
 
 		r.Route("/{postId}/comment", func(r chi.Router) {
 			//r.Post("/create", handlerUser.HandleCreateComment)

@@ -23,12 +23,7 @@ type IHandlerUser interface {
 func (h *HandlerUser) HandleLogin(w http.ResponseWriter, r *http.Request) {
 	var payload dto.UserLoginPayload
 
-	if err := responses.ParseJsonRequestBodyOrSendErrorResponse(w, r, &payload); err != nil {
-		return
-	}
-
-	if err := h.Validator.Struct(payload); err != nil {
-		responses.SendErrorResponse(w, http.StatusBadRequest, "VALIDATION_ERROR", err)
+	if err := parseAndValidateOrSendError(w, r, payload, h.Validator); err != nil {
 		return
 	}
 
@@ -38,14 +33,10 @@ func (h *HandlerUser) HandleLogin(w http.ResponseWriter, r *http.Request) {
 func (h *HandlerUser) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 	var payload dto.UserCreatePayload
 
-	if err := responses.ParseJsonRequestBodyOrSendErrorResponse(w, r, &payload); err != nil {
+	if err := parseAndValidateOrSendError(w, r, payload, h.Validator); err != nil {
 		return
 	}
 
-	if err := h.Validator.Struct(payload); err != nil {
-		responses.SendErrorResponse(w, http.StatusBadRequest, "VALIDATION_ERROR", err)
-		return
-	}
 	u := domain.NewUser(payload.Name, payload.Password, payload.Email, payload.Phone, payload.Address, payload.Document, payload.Username, payload.Age)
 
 	user, err := h.LoginService.Create(u)
@@ -57,4 +48,16 @@ func (h *HandlerUser) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 
 	responses.SendResponse(w, http.StatusCreated, user)
 
+}
+
+func parseAndValidateOrSendError(w http.ResponseWriter, r *http.Request, payload any, v *validator.Validate) error {
+	if err := responses.ParseJsonRequestBodyOrSendErrorResponse(w, r, &payload); err != nil {
+		return err
+	}
+
+	if err := v.Struct(payload); err != nil {
+		responses.SendErrorResponse(w, http.StatusBadRequest, "VALIDATION_ERROR", err)
+		return err
+	}
+	return nil
 }
